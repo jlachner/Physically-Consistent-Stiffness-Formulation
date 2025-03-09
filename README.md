@@ -1,7 +1,7 @@
 # Physically-Consistent-Stiffness-Formulation 
 
 ## Description  
-This repository contains the experimental data and code related to the paper **"[Paper Title]"**. The experiments focus on [brief paper topic, e.g., "evaluating impedance control in human-robot interaction"].  
+This repository contains code for the experiments related to the paper "A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation" by J. Lachner, M. C. Nah, and N. Hogan. 
 
 ## Repository Structure  
 - `/data/` - Raw and processed experimental data  
