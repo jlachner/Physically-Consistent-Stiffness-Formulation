@@ -11,3 +11,9 @@ This repository contains code for the experiments related to the paper "A Physic
 
 ## Requirements  
 To run the experiments, install the required dependencies:  
+
+## Citation
+
+If you use this repository, please cite our paper:
+
+	Author(s). [Paper Title], [Conference/Journal], Year.
