@@ -23,12 +23,16 @@ To run the experiments, install the required dependencies:
 - **C++ Libraries**:
   - Eigen (for matrix computations)
   - Boost (for threading and chrono utilities)
-  - Explicit-cpp (for robot interaction)
+  - Explicit-cpp (for kinematic and dynamic calculations)
 
 - **MATLAB** (for analysis scripts)
+
+## Explicit-MATLAB & Explicit-FRI  
+This repository utilizes **Explicit-MATLAB** and **Explicit-FRI** for robot interaction and analysis.  
+For more information, visit: [Explicit Robotics](https://explicit-robotics.github.io/).
 
 ## Citation  
 
 If you use this repository, please cite our paper:
 
-    J. Lachner, M. C. Nah, and N. Hogan, "A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation," [Conference/Journal], Year.
+    J. Lachner, M. C. Nah, and N. Hogan, "A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation," arXiv, 2025.
