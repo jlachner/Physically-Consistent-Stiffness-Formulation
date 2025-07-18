@@ -8,7 +8,7 @@ by J. Lachner, M. C. Nah, and N. Hogan.
 ## Repository Structure  
 
 - `/FRI_ClientApplication/` – Client-side application for interfacing with the KUKA LBR robot  
-  - `/trajectory_csv/` – Recorded joint and end-effector trajectory data  
+  - `/trajectory_csv/` – Recorded joint trajectory data  
   - `/src/` – Source code for implementing the stiffness formulation  
     - `MyLBRClient.cpp/.h` – Core implementation for the LBR robot client  
     - `my_diff_jacobians.cpp/.h` – Differential Jacobians for stiffness computation  
@@ -16,9 +16,8 @@ by J. Lachner, M. C. Nah, and N. Hogan.
     - `CMakeLists.txt` – Build configuration for CMake  
 
 - `/Matlab/` – MATLAB scripts for analysis, visualization, and validation  
-  - `/Experiment1/` – Scripts for anthropomorphic model validation  
-  - `/Experiment2/` – Scripts for IIWA14 contact-rich manipulation experiments  
-  - `main_CS.m` – Main script for contact-stiffness analysis (replaces old `main_Antropomorphic.m`)
+  - `/Experiment1/` – Scripts for Experiment 1: Parkour
+  - `/Experiment2/` – Scripts for Experiment 1: Wiping a bowl  
 
 - `LICENSE` – Licensing information  
 - `README.md` – This document  
@@ -26,13 +25,14 @@ by J. Lachner, M. C. Nah, and N. Hogan.
 ## Requirements  
 
 ### C++  
-- **Eigen** (matrix computations)  
+- **Eigen** (matrix and vector computations)  
 - **Boost** (threading and timing utilities)  
-- **Explicit-cpp** (kinematic and dynamic calculations for stiffness formulation)  
+- **[Explicit-FRI](https://github.com/explicit-robotics/Explicit-FRI)** (KUKA Fast Research Interface implementation)
 
 ### MATLAB  
 - MATLAB R2020b or newer  
-- Explicit-MATLAB (for data processing and analysis)  
+- Explicit-MATLAB (for data processing and analysis) 
+- **[Explicit-MATLAB](https://github.com/explicit-robotics/Explicit-MATLAB)** 
 
 ## Explicit-MATLAB & Explicit-FRI  
 This repository utilizes **Explicit-MATLAB** and **Explicit-FRI** for robot interaction and analysis.  
