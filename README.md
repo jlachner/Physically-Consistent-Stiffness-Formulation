@@ -5,6 +5,21 @@ This repository contains code for the experiments related to the paper
 **"A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation"**  
 by J. Lachner, M. C. Nah, and N. Hogan.
 
+<p align="center">
+  <img src="docs/Parkour.png" width="45%" style="margin-right:10px;">
+  <img src="docs/Bowl.png" width="45%">
+</p>
+
+## Abstract  
+Ensuring symmetric stiffness in impedance-controlled robots is crucial for physically meaningful and stable interaction
+in contact-rich manipulation. Conventional approaches neglect the change of basis vectors in curved spaces, leading
+to an asymmetric joint-space stiffness matrix that violates passivity and conservation principles. In this work, we derive
+a physically consistent, symmetric joint-space stiffness formulation directly from the task-space stiffness matrix by
+explicitly incorporating Christoffel symbols. This correction resolves long-standing inconsistencies in stiffness modeling,
+ensuring energy conservation and stability. We validate our approach experimentally on a robotic system, demonstrating
+that omitting these correction terms results in significant asymmetric stiffness errors. Our findings bridge theoretical
+insights with practical control applications, offering a robust framework for stable and interpretable robotic interactions.
+
 ## Repository Structure  
 
 - `/FRI_ClientApplication/` – Client-side application for interfacing with the KUKA LBR robot  
