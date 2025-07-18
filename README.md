@@ -1,13 +1,11 @@
 # Physically-Consistent-Stiffness-Formulation 
 
-## Description  
-This repository contains code for the experiments related to the paper  
-**"A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation"**  
+## A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation 
 by J. Lachner, M. C. Nah, and N. Hogan.
 
 <p align="center">
-  <img src="docs/Parkour.png" width="45%" style="margin-right:10px;">
-  <img src="docs/Bowl.png" width="45%">
+  <img src="docs/Parkour.png" height="250">
+  <img src="docs/Bowl.png" height="250">
 </p>
 
 ## Abstract  
