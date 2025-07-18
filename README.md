@@ -31,8 +31,7 @@ by J. Lachner, M. C. Nah, and N. Hogan.
 
 ### MATLAB  
 - MATLAB R2020b or newer  
-- Explicit-MATLAB (for data processing and analysis) 
-- **[Explicit-MATLAB](https://github.com/explicit-robotics/Explicit-MATLAB)** 
+- **[Explicit-MATLAB](https://github.com/explicit-robotics/Explicit-MATLAB)** (for data processing and analysis)
 
 ## Explicit-MATLAB & Explicit-FRI  
 This repository utilizes **Explicit-MATLAB** and **Explicit-FRI** for robot interaction and analysis.  
