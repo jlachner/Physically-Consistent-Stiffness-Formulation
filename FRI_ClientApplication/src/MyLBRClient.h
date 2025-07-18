@@ -137,6 +137,7 @@ private:
     // Minimum-jerk trajectory to move to that location
     MinimumJerkTrajectory *mjt_q;
 
+
     // Choose the body you want to control and the position on this body
     signed int bodyIndex;
     Eigen::Vector3d pointPosition;
@@ -152,6 +153,9 @@ private:
     Eigen::VectorXd tau_previous;
     Eigen::VectorXd tau_prev_prev;
     Eigen::VectorXd tau_total;
+    Eigen::VectorXd tauExt_previous;
+    Eigen::VectorXd tauExt_prev_prev;
+    Eigen::VectorXd tauExt_filtered;
 
     // DECLARE VARIABLES FOR YOUR CONTROLLER HERE!!!
     Eigen::MatrixXd M;
@@ -159,6 +163,7 @@ private:
     Eigen::MatrixXd H;
     Eigen::MatrixXd R;
     Eigen::MatrixXd J;
+    Eigen::MatrixXd J_inv;
     
     Eigen::MatrixXd Kp;
     Eigen::MatrixXd Kr;
@@ -176,9 +181,6 @@ private:
     Eigen::MatrixXd K_fin_thread;
     Eigen::MatrixXd K_kin_thread;
     Eigen::VectorXd q_0;
-
-    Eigen::MatrixXd Kq_test;
-    Eigen::MatrixXd Bq_test;
     
     Eigen::MatrixXd dJH1_thread;
     Eigen::MatrixXd dJH2_thread;
@@ -208,6 +210,11 @@ private:
     Eigen::VectorXd f_ext_0;
     Eigen::VectorXd m_ext_0;
     Eigen::VectorXd F_ext_0;
+
+    Eigen::VectorXd m_ext_previous;
+    Eigen::VectorXd m_ext_prev_prev;
+    Eigen::VectorXd m_ext_filtered;
+
 
 };
 

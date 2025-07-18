@@ -69,11 +69,80 @@ static double filterInput[7][NCoef+1]; //input samples. Static variables are ini
 
 
 //******************************************************************************
+// A Function to read a CSV file and save it as a 2D matrix
+// Dimensions for row x col are 7 x N, where 7 (row) is the degrees of freedom of the KUKA, N (col) is the number of data points
+Eigen::MatrixXd readCSV( const string& filename )
+{
+    ifstream file( filename );
+    if( !file.is_open( ) )
+    {
+        cerr << "Error: Couldn't open the file: " << filename << endl;
+        exit( 1 );
+    }
+
+    // Read the values as 2D vector array
+    vector<vector<double>> values;
+
+    string line;
+    int lineNum = 0;
+    int numCols = 0;
+
+    while ( getline( file, line ) )
+    {
+        ++lineNum;
+        stringstream ss( line );
+        string cell;
+        vector<double> row;
+        while ( getline( ss, cell, ',' ) )
+        {
+            try
+            {
+                row.push_back( stod( cell ) );
+            } catch ( const std::invalid_argument& e )
+            {
+                cerr << "Error: Invalid argument at line " << lineNum << ", column: " << row.size() + 1 << endl;
+                exit( 1 );
+            }
+        }
+
+        values.push_back( row );
+        if ( numCols == 0 )
+        {
+            numCols = row.size( );
+        }
+        else if ( row.size() != numCols )
+        {
+            cerr << "Error: Inconsistent number of columns in the CSV file." << endl;
+            exit( 1 );
+        }
+    }
+
+    // Error if CSV File is empty
+    if ( values.empty( ) )
+    {
+        cerr << "Error: CSV file is empty." << endl;
+        exit(1);
+    }
+
+    // Create Eigen Matrix
+    Eigen::MatrixXd mat( values.size(), numCols );
+    for (int i = 0; i < values.size(); i++)
+    {
+        for (int j = 0; j < numCols; j++)
+        {
+            mat(i, j) = values[i][j];
+        }
+    }
+    return mat;
+}
+
+
+//******************************************************************************
 MyLBRClient::MyLBRClient(double freqHz, double amplitude){
 
     /** Initialization */
 
-    // THIS CONFIGURATION MUST BE THE SAME AS FOR THE JAVA APPLICATION!
+    // THIS CONFIGURATION MUST BE THE SAME AS FOR THE JAVA APPLICATION!!
     qInitial[0] = 70.45 * M_PI/180;
     qInitial[1] = 55.35 * M_PI/180;
     qInitial[2] = -36.13   * M_PI/180;
@@ -93,9 +162,6 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
     // Zero force trajectory
     q_0 = Eigen::VectorXd::Zero( myLBR->nq );
     dq_0 = Eigen::VectorXd::Zero( myLBR->nq );
-
-    // External torques
-    tauExt = Eigen::VectorXd::Zero( myLBR->nq );
 
     // Time variables for control loop
     currentTime = 0;
@@ -118,7 +184,8 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
     tau_total     = Eigen::VectorXd::Zero( myLBR->nq );
 
     // Read the joint value data
-    q_data = readCSV( "../data/q_recorded.csv" );
+    // FILL-IN YOUR CSV FILE ADDRESS!!
+    q_data = readCSV( "/home/newman_lab/Desktop/Explicit-FRI/Client_Applications/cs_app/data/q_recorded_smoothed.csv" );
 
     // Number of joint-trajectory data points, and its current iteration
     N_data = q_data.cols( );
@@ -146,14 +213,18 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
     // ************************************************************
     M = Eigen::MatrixXd::Zero( myLBR->nq, myLBR->nq );
     M_inv = Eigen::MatrixXd::Zero( myLBR->nq, myLBR->nq );
-    
-    // Distance of flange + force sensor + tool
-    pointPosition = Eigen::Vector3d( 0.0, 0.0, 0.275 );
-    bodyIndex = 7;                                       // the end-effector
-
+       
+    pointPosition = Eigen::Vector3d( 0.0, 0.0, 0.275 );     // Distance of flange + force sensor + tool
+    bodyIndex = 7;
     H = Eigen::MatrixXd::Zero( 4, 4 );
     R = Eigen::MatrixXd::Zero( 3, 3 );
     J = Eigen::MatrixXd::Zero( 6, myLBR->nq );
+    J_inv = Eigen::MatrixXd::Zero( myLBR->nq, 6 );
+
+    tauExt  = Eigen::VectorXd::Zero( myLBR->nq  );
+    tauExt_previous = Eigen::VectorXd::Zero( 6 );
+    tauExt_prev_prev = Eigen::VectorXd::Zero( 6 );
+    tauExt_filtered = Eigen::VectorXd::Zero( 6 );
 
     f_ext_ee = Eigen::VectorXd::Zero( 3 );
     m_ext_ee = Eigen::VectorXd::Zero( 3 );
@@ -161,10 +232,14 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
     m_ext_0 = Eigen::VectorXd::Zero( 3 );
     F_ext_0 = Eigen::VectorXd::Zero( 6 );
 
+    m_ext_previous = Eigen::VectorXd::Zero( 3 );
+    m_ext_prev_prev = Eigen::VectorXd::Zero( 3 );
+    m_ext_filtered = Eigen::VectorXd::Zero( 3 );
+
     // Cartesian stiffness
     Kp = Eigen::MatrixXd::Identity( 3, 3 );
     Kp = 700 * Kp;
-    Kp( 2, 2 ) = 850;
+    Kp( 2, 2 ) = 800;
     K = Eigen::MatrixXd::Zero( 6, 6 );
     for ( int i=0; i<3; i++ )
     {
@@ -172,7 +247,7 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
     }
 
     Kr = Eigen::MatrixXd::Identity( 3, 3 );
-    Kr = 70 * Kr;
+    Kr = 30 * Kr;
     for (int i=0; i<3; i++)
     {
         K( i+3, i+3 ) = Kr( i, i );
@@ -180,7 +255,7 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
 
     // Cartesian damping
     Bp = Eigen::MatrixXd::Identity( 3, 3 );
-    Bp = 50 * Bp;
+    Bp = 40 * Bp;
     B = Eigen::MatrixXd::Zero( 6, 6 );
     for ( int i=0; i<3; i++ )
     {
@@ -212,9 +287,11 @@ MyLBRClient::MyLBRClient(double freqHz, double amplitude){
 
     // ************************************************************
     // INCLUDE FT-SENSOR
+    // ************************************************************
     // Weight: 0.2kg (plate) + 0.255kg (sensor) = 0.455kg
     AtiForceTorqueSensor ftSensor("172.31.1.1");
     printf( "Sensor Activated. \n\n" );
+
 
     // Initial print
     printf( "Exp[licit](c)-cpp-FRI, https://explicit-robotics.github.io \n\n" );
@@ -373,18 +450,21 @@ void MyLBRClient::command()
     }
 
     // ************************************************************
-    // Calculate kinematics and dynamics (tool endpoint wrt base frame)
+    // Calculate kinematics and dynamics
 
     // Transformation and Rotation Matrix
     H = myLBR->getForwardKinematics( q, 7, pointPosition );
+    //H = myLBR->getForwardKinematics( q );
     R = H.block< 3, 3 >( 0, 0 );
 
     // Jacobian
     J = myLBR->getHybridJacobian( q, pointPosition );
+    //J = myLBR->getHybridJacobian( q );
 
     // Mass matrix
     M = myLBR->getMassMatrix( q );
     M_inv = this->M.inverse();
+
 
     // ************************************************************
     // Get FTSensor data
@@ -407,6 +487,18 @@ void MyLBRClient::command()
     F_ext_0[3] = m_ext_0[0];
     F_ext_0[4] = m_ext_0[1];
     F_ext_0[5] = m_ext_0[2];
+
+    // A simple filter for m_ext_0
+    if (currentTime < sampleTime )
+    {
+        m_ext_previous = m_ext_0;
+        m_ext_prev_prev = m_ext_0;
+    }
+
+    m_ext_filtered = ( m_ext_0 + m_ext_previous + m_ext_prev_prev ) / 3;
+
+    m_ext_previous = m_ext_0;
+    m_ext_prev_prev = m_ext_previous;
 
     // ************************************************************
     // Calculate the virtual trajectory
@@ -431,7 +523,7 @@ void MyLBRClient::command()
         Kq = J.transpose() * K * J;
         Bq = J.transpose() * B * J;
 
-        // Handle nullspace
+        // Handle nullspace through simple 'least squares method'
         Kq = Kq + 5 * Eigen::MatrixXd::Identity(7,7);
         Bq = Bq + 1 * Eigen::MatrixXd::Identity(7,7);
 
@@ -456,12 +548,17 @@ void MyLBRClient::command()
         mutex.unlock();
     }
 
+
     // ************************************************************
     // Control torque
 
     // Joint space impedance controller
     Eigen::VectorXd del_q = (q_0 - q);
     tau_motion = Kq * del_q - Bq * dq;
+
+    // Include joint limits
+    tau_motion = myLBR->addIIWALimits( q, dq, M, tau_motion, 0.004 );
+
 
     // ************************************************************
     // YOUR CODE ENDS HERE!
@@ -495,6 +592,7 @@ void MyLBRClient::command()
     tau_previous = tau_motion;
     tau_prev_prev = tau_previous;
 
+
     // Check if Button Pressed
     if( robotState().getBooleanIOValue( "MediaFlange.UserButton" ) && !is_pressed )
     {
@@ -519,6 +617,8 @@ void MyLBRClient::command()
             {
                 N_curr++;
 
+                // YOU CAN ADD CODE HERE ...
+
                 // The N_curr must not exceed the column size.
                 if( N_curr >= N_data )
                 {
@@ -540,17 +640,34 @@ void MyLBRClient::impedanceOptimizer()
 
     while(true){
 
+        // // --- START TIME ---
+        // boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
+
         // Calculate standard Hessian
         Eigen::MatrixXd kq = J.transpose() * K * J;
 
         // Christoffel symbols based on Kinematic Connection for Hybrid Jacobian
         Eigen::MatrixXd cs = Eigen::MatrixXd::Zero( 6, 6 );
+        //        cs( 3, 4 ) = f_ext_0( 5 )/2;
+        //        cs( 3, 5 ) = -f_ext_0( 4 )/2;
+        //        cs( 4, 3 ) = -f_ext_0( 5 )/2;
+        //        cs( 4, 5 ) = f_ext_0( 3 )/2;
+        //        cs( 5, 3 ) = f_ext_0( 4 )/2;
+        //        cs( 5, 4 ) = -f_ext_0( 3 )/2;
+
         cs( 3, 4 ) = m_ext_0( 2 )/2;
         cs( 3, 5 ) = -m_ext_0( 1 )/2;
         cs( 4, 3 ) = -m_ext_0( 2 )/2;
         cs( 4, 5 ) = m_ext_0( 0 )/2;
         cs( 5, 3 ) = m_ext_0( 1 )/2;
         cs( 5, 4 ) = -m_ext_0( 0 )/2;
+
+        // cs( 3, 4 ) = m_ext_filtered( 2 )/2;
+        // cs( 3, 5 ) = -m_ext_filtered( 1 )/2;
+        // cs( 4, 3 ) = -m_ext_filtered( 2 )/2;
+        // cs( 4, 5 ) = m_ext_filtered( 0 )/2;
+        // cs( 5, 3 ) = m_ext_filtered( 1 )/2;
+        // cs( 5, 4 ) = -m_ext_filtered( 0 )/2;
 
         // Calculate Jacobian Partials
         Eigen::MatrixXd dJH1 = dJH_T_dq1( q[ 0 ], q[ 1 ], q[ 2 ], q[ 3 ], q[ 4 ], q[ 5 ], q[ 6 ] );
@@ -571,14 +688,15 @@ void MyLBRClient::impedanceOptimizer()
         k_kin.col( 5 ) = dJH6 * F_ext_0;
         k_kin.col( 6 ) = dJH7 * F_ext_0;
 
-        // COMMENT THIS OUT FOR CONVENTIONAL APPROACH (NON-SYMMETRIC!!!)
-        //k_kin = k_kin + J.transpose() * cs * J;
+        // COMMENT THIS OUT FOR SYMMETRIC APPROACH
+        k_kin = k_kin + J.transpose() * cs * J;
 
         Eigen::MatrixXd k_final = k_kin + kq;
+        k_final = k_final + 1 * Eigen::MatrixXd::Identity(7,7);   // THERE IS NO NULLSPACE!
 
         // Damping design
         Eigen::MatrixXd bq = J.transpose() * B * J;
-        bq = bq + 0.1 * Eigen::MatrixXd::Identity(7,7);         // Simple superposition to damp the nullspace
+        bq = bq + 0.1 * Eigen::MatrixXd::Identity(7,7);         // THERE IS NO NULLSPACE!
 
         //****************** Update everyting at the end with one Mutex ******************//
         mutex.lock();
@@ -589,75 +707,15 @@ void MyLBRClient::impedanceOptimizer()
 
         mutex.unlock();
 
+        // // --- END TIME ---
+        // boost::chrono::high_resolution_clock::time_point end = boost::chrono::high_resolution_clock::now();
+
+        // // --- COMPUTE DURATION ---
+        // boost::chrono::duration<double> duration = boost::chrono::duration_cast<boost::chrono::duration<double>>(end - start);
+
+        // std::cout << "[impedanceOptimizer] Loop time: " << duration.count() << " seconds" << std::endl;
+
+
     }
 
-}
-
-
-//******************************************************************************
-// A Function to read a CSV file and save it as a 2D matrix
-// Dimensions for row x col are 7 x N, where 7 (row) is the degrees of freedom of the KUKA, N (col) is the number of data points
-Eigen::MatrixXd readCSV( const string& filename )
-{
-    ifstream file( filename );
-    if( !file.is_open( ) )
-    {
-        cerr << "Error: Couldn't open the file: " << filename << endl;
-        exit( 1 );
-    }
-
-    // Read the values as 2D vector array
-    vector<vector<double>> values;
-
-    string line;
-    int lineNum = 0;
-    int numCols = 0;
-
-    while ( getline( file, line ) )
-    {
-        ++lineNum;
-        stringstream ss( line );
-        string cell;
-        vector<double> row;
-        while ( getline( ss, cell, ',' ) )
-        {
-            try
-            {
-                row.push_back( stod( cell ) );
-            } catch ( const std::invalid_argument& e )
-            {
-                cerr << "Error: Invalid argument at line " << lineNum << ", column: " << row.size() + 1 << endl;
-                exit( 1 );
-            }
-        }
-
-        values.push_back( row );
-        if ( numCols == 0 )
-        {
-            numCols = row.size( );
-        }
-        else if ( row.size() != numCols )
-        {
-            cerr << "Error: Inconsistent number of columns in the CSV file." << endl;
-            exit( 1 );
-        }
-    }
-
-    // Error if CSV File is empty
-    if ( values.empty( ) )
-    {
-        cerr << "Error: CSV file is empty." << endl;
-        exit(1);
-    }
-
-    // Create Eigen Matrix
-    Eigen::MatrixXd mat( values.size(), numCols );
-    for (int i = 0; i < values.size(); i++)
-    {
-        for (int j = 0; j < numCols; j++)
-        {
-            mat(i, j) = values[i][j];
-        }
-    }
-    return mat;
 }
