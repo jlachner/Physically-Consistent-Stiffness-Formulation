@@ -1,11 +1,19 @@
-# Physically-Consistent-Stiffness-Formulation 
+# A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation 
 
-## A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation 
-by J. Lachner, M. C. Nah, and N. Hogan.
+**Johannes Lachner¹², Moses C. Nah¹, and Neville Hogan¹²**  
+
+¹ Department of Mechanical Engineering, Massachusetts Institute of Technology, Cambridge, USA  
+² Department of Brain and Cognitive Sciences, Massachusetts Institute of Technology, Cambridge, USA  
+
 
 <p align="center">
-  <img src="docs/Parkour.png" height="250">
+  <img src="docs/Parkour.png" height="250" style="margin-right:15px;">
   <img src="docs/Bowl.png" height="250">
+</p>
+
+<p align="center">
+  <b>Left:</b> Overlaid robot configurations during the parkour experiments.
+  <b>Right:</b> Overlaid robot configurations and directions during the bowl-wiping experiments.
 </p>
 
 ## Abstract  
