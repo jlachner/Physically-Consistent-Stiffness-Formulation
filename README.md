@@ -1,6 +1,6 @@
 # A Physically Consistent Stiffness Formulation for Contact-Rich Manipulation 
 
-**Johannes Lachner¹², Moses C. Nah¹, and Neville Hogan¹²**  
+**Johannes Lachner<sup>1,2</sup>, Moses C. Nah<sup>1</sup>, and Neville Hogan<sup>1,2</sup>**  
 
 ¹ Department of Mechanical Engineering, Massachusetts Institute of Technology, Cambridge, USA  
 ² Department of Brain and Cognitive Sciences, Massachusetts Institute of Technology, Cambridge, USA  
